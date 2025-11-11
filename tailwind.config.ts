@@ -57,6 +57,25 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        risk: {
+          high: "hsl(var(--risk-high))",
+          medium: "hsl(var(--risk-medium))",
+          low: "hsl(var(--risk-low))",
+        },
+        factor: {
+          positive: "hsl(var(--positive-factor))",
+          negative: "hsl(var(--negative-factor))",
+          neutral: "hsl(var(--neutral-factor))",
+        },
+        alert: {
+          bias: "hsl(var(--alert-bias))",
+          warning: "hsl(var(--alert-warning))",
+        },
+        confidence: {
+          high: "hsl(var(--confidence-high))",
+          medium: "hsl(var(--confidence-medium))",
+          low: "hsl(var(--confidence-low))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
