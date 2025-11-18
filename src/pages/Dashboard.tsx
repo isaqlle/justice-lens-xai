@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
+import { Search, AlertTriangle, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 
 const Dashboard = () => {
   const cases = [
@@ -61,6 +61,12 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground">Sistema de Avaliação de Risco Explicável</p>
             </div>
             <div className="flex items-center gap-4">
+              <Link to="/fairness-audit">
+                <Button variant="outline">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Auditoria de Viés
+                </Button>
+              </Link>
               <Badge variant="outline" className="text-sm">
                 Juiz(a): Dr. Ana Costa
               </Badge>
