@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { ShapForcePlot } from "@/components/ShapForcePlot";
 import { 
   ArrowLeft, 
   AlertTriangle, 
@@ -74,16 +75,43 @@ const CaseDetail = () => {
     },
   ];
 
+  // SHAP factors for detailed analysis
+  const shapFactors = [
+    { name: "Histórico de crimes violentos", shapValue: 2.3, type: "positive" as const, description: "3 ocorrências", isBiasProxy: false },
+    { name: "Idade na primeira infração", shapValue: 1.2, type: "positive" as const, description: "16 anos", isBiasProxy: false },
+    { name: "CEP de residência", shapValue: 0.5, type: "positive" as const, description: "Zona de alta criminalidade", isBiasProxy: true },
+    { name: "Falta de emprego formal", shapValue: 0.8, type: "positive" as const, description: "Desempregado 2 anos", isBiasProxy: false },
+    { name: "Vínculos comunitários", shapValue: -1.0, type: "negative" as const, description: "2 declarações", isBiasProxy: false },
+    { name: "Programas de reabilitação", shapValue: -0.7, type: "negative" as const, description: "Concluído 2023", isBiasProxy: false },
+    { name: "Tempo desde última infração", shapValue: -0.3, type: "negative" as const, description: "18 meses", isBiasProxy: false },
+    { name: "Histórico de uso de substâncias", shapValue: 0.6, type: "positive" as const, description: "Tratamento em andamento", isBiasProxy: false },
+  ];
+
+  const [excludedShapFactors, setExcludedShapFactors] = useState<string[]>([]);
+
   const calculateSimulatedScore = () => {
     let adjustment = 0;
     if (simulationFactors.employment) adjustment -= 1.2;
     if (simulationFactors.rehabilitation) adjustment -= 0.8;
     if (simulationFactors.communityTies) adjustment -= 0.5;
+    
+    // Adjust for excluded SHAP factors
+    excludedShapFactors.forEach(factorName => {
+      const factor = shapFactors.find(f => f.name === factorName);
+      if (factor) {
+        adjustment -= factor.shapValue;
+      }
+    });
+    
     return Math.max(0, Math.min(10, caseData.riskScore + adjustment));
   };
 
   const simulatedScore = calculateSimulatedScore();
-  const hasSimulation = Object.values(simulationFactors).some(v => v);
+  const hasSimulation = Object.values(simulationFactors).some(v => v) || excludedShapFactors.length > 0;
+
+  const handleShapRecalculate = (excluded: string[]) => {
+    setExcludedShapFactors(excluded);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -228,6 +256,14 @@ const CaseDetail = () => {
                 </div>
               </AlertDescription>
             </Alert>
+
+            {/* SHAP Force Plot */}
+            <ShapForcePlot 
+              factors={shapFactors}
+              baseRisk={5.0}
+              currentRisk={simulatedScore}
+              onRecalculate={handleShapRecalculate}
+            />
 
             {/* Data Transparency */}
             <Card>
