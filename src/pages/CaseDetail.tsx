@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 
 const CaseDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [simulationFactors, setSimulationFactors] = useState({
     employment: false,
     rehabilitation: false,
@@ -36,45 +37,7 @@ const CaseDetail = () => {
     confidence: 85,
     riskLevel: "medium-high",
   };
-
-  const factors = [
-    {
-      name: "Histórico de crimes violentos",
-      impact: 45,
-      type: "negative" as const,
-      description: "3 ocorrências registradas",
-      verified: true,
-    },
-    {
-      name: "Idade na primeira infração",
-      impact: 20,
-      type: "negative" as const,
-      description: "16 anos - fator de risco conhecido",
-      verified: true,
-    },
-    {
-      name: "Falta de vínculo empregatício formal",
-      impact: 10,
-      type: "negative" as const,
-      description: "Sem registro em carteira nos últimos 2 anos",
-      verified: true,
-    },
-    {
-      name: "Vínculos comunitários",
-      impact: -15,
-      type: "positive" as const,
-      description: "Comprovados por 2 declarações",
-      verified: true,
-    },
-    {
-      name: "Participação em programas de reabilitação",
-      impact: -10,
-      type: "positive" as const,
-      description: "Programa concluído em 2023",
-      verified: true,
-    },
-  ];
-
+  
   // SHAP factors for detailed analysis
   const shapFactors = [
     { name: "Histórico de crimes violentos", shapValue: 2.3, type: "positive" as const, description: "3 ocorrências", isBiasProxy: false },
@@ -111,6 +74,24 @@ const CaseDetail = () => {
 
   const handleShapRecalculate = (excluded: string[]) => {
     setExcludedShapFactors(excluded);
+  };
+
+  const handleGenerateSimulationReport = () => {
+    // Navega para a página de relatório, passando o score simulado como parâmetro de consulta.
+    const url = `/report/${caseData.id}?simulatedScore=${simulatedScore.toFixed(1)}&isSimulation=true`;
+    navigate(url);
+  };
+
+  const handleBiasRecalculate = () => {
+    const biasFactor = "CEP de residência";
+    // Alterna a exclusão/inclusão do fator proxy.
+    setExcludedShapFactors(prev => {
+      if (prev.includes(biasFactor)) {
+        return prev.filter(name => name !== biasFactor);
+      } else {
+        return [...prev, biasFactor];
+      }
+    });
   };
 
   return (
@@ -200,72 +181,6 @@ const CaseDetail = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Factors Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Fatores-Chave da Avaliação</CardTitle>
-                <CardDescription>Como cada fator contribuiu para o score final</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {factors.map((factor, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        {factor.type === "positive" ? (
-                          <TrendingDown className="h-5 w-5 text-factor-positive flex-shrink-0" />
-                        ) : (
-                          <TrendingUp className="h-5 w-5 text-factor-negative flex-shrink-0" />
-                        )}
-                        <div className="flex-1">
-                          <p className="font-semibold text-sm">{factor.name}</p>
-                          <p className="text-xs text-muted-foreground">{factor.description}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {factor.verified && (
-                          <CheckCircle2 className="h-4 w-4 text-confidence-high" />
-                        )}
-                        <Badge 
-                          className={factor.type === "positive" 
-                            ? "bg-factor-positive text-white" 
-                            : "bg-factor-negative text-white"
-                          }
-                        >
-                          {factor.impact > 0 ? '+' : ''}{factor.impact}%
-                        </Badge>
-                      </div>
-                    </div>
-                    <Progress 
-                      value={Math.abs(factor.impact)} 
-                      className={factor.type === "positive" ? "bg-factor-positive/20" : "bg-factor-negative/20"}
-                    />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Bias Alert Card */}
-            <Alert className="border-alert-bias bg-alert-bias/10">
-              <AlertTriangle className="h-5 w-5 text-alert-bias" />
-              <AlertTitle className="text-alert-bias font-bold">Alerta de Viés Proxy Detectado</AlertTitle>
-              <AlertDescription className="space-y-3 mt-2">
-                <p className="text-sm">
-                  <span className="font-semibold">Atenção:</span> O modelo detectou que o fator 
-                  <span className="font-semibold"> "CEP de residência"</span> (contribuição: +5%) 
-                  possui uma correlação histórica elevada com viés racial em nossos dados de treinamento.
-                </p>
-                <div className="flex gap-3">
-                  <Button variant="outline" size="sm" className="border-alert-bias text-alert-bias">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Recalcular sem este fator
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Ver análise completa de viés
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
 
             {/* SHAP Force Plot */}
             <ShapForcePlot 
@@ -385,7 +300,11 @@ const CaseDetail = () => {
                   </>
                 )}
 
-                <Button className="w-full" disabled={!hasSimulation}>
+                <Button 
+                  className="w-full" 
+                  disabled={!hasSimulation}
+                  onClick={handleGenerateSimulationReport}
+                >
                   Gerar Relatório da Simulação
                 </Button>
               </CardContent>

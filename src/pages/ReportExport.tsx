@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert
 import { 
   ArrowLeft, 
   Download, 
@@ -16,41 +17,61 @@ import {
   Scale,
   QrCode
 } from "lucide-react";
+import { cn } from "@/lib/utils"; // Import cn for Tailwind utilities
 
 const ReportExport = () => {
   const { id } = useParams();
+  const location = useLocation(); 
+  const searchParams = new URLSearchParams(location.search);
+  const simulatedScoreParam = searchParams.get('simulatedScore');
+  
+  // Determine if it's a simulation report
+  const isSimulation = !!simulatedScoreParam && searchParams.get('isSimulation') === 'true';
+
   const [selectedSections, setSelectedSections] = useState({
     score: true,
     shap: true,
     bias: true,
     technical: true,
     fairness: false,
-    simulation: false,
+    simulation: isSimulation, // Select simulation section by default if it's a simulation
   });
 
-  const caseData = {
+  // Base mock data (Default riskScore is 6.5)
+  const baseCaseData = {
     id: id || "2024-001",
     defendant: "João Silva",
     age: 28,
-    riskScore: 6.5,
-    confidence: 85,
+    // Use the simulated score if available, otherwise use the default risk score
+    riskScore: simulatedScoreParam ? parseFloat(simulatedScoreParam) : 6.5,
+    confidence: 85, // Assuming confidence remains constant
     date: new Date().toLocaleDateString("pt-BR"),
     time: new Date().toLocaleTimeString("pt-BR"),
     judge: "Dr. Ana Costa",
     court: "2ª Vara Criminal - Comarca de São Paulo",
   };
+  
+  const caseData = baseCaseData;
 
   const toggleSection = (section: keyof typeof selectedSections) => {
     setSelectedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const getRiskLevel = (score: number) => {
+    if (score < 4) return { label: "Baixo", color: "bg-risk-low" };
+    if (score < 7) return { label: "Médio", color: "bg-risk-medium" };
+    return { label: "Alto", color: "bg-risk-high" };
+  }
+  
+  const currentRiskLevel = getRiskLevel(caseData.riskScore);
+
   const sections = [
     { id: "score", label: "Score Preditivo e Nível de Confiança", required: true },
     { id: "shap", label: "Visualização SHAP (Gráfico de Contribuição de Fatores)", required: true },
-    { id: "bias", label: "Alerta de Viés Aplicado (com Simulação)", required: false },
+    { id: "bias", label: "Alerta de Viés Aplicado", required: false },
     { id: "technical", label: "Descrição Técnica do Modelo (Algoritmo, Versão, Data)", required: true },
     { id: "fairness", label: "Métricas Globais de Fairness", required: false },
-    { id: "simulation", label: "Simulações de Cenários Alternativos", required: false },
+    { id: "simulation", label: "Simulações de Cenários Alternativos (Cenário " + (isSimulation ? "Simulado)" : "Base)"), required: false },
   ];
 
   return (
@@ -65,8 +86,14 @@ const ReportExport = () => {
               </Button>
             </Link>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">Exportação de Relatório XAI</h1>
-              <p className="text-sm text-muted-foreground">Caso {caseData.id} - {caseData.defendant}</p>
+              <h1 className="text-2xl font-bold text-foreground">
+                Exportação de Relatório XAI 
+                {isSimulation && <Badge className="ml-2 bg-primary/20 text-primary">Simulação</Badge>}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Caso {caseData.id} - {caseData.defendant} 
+                {isSimulation && <span className="font-semibold text-alert-bias ml-2">(Cenário Simulado de Mitigação de Viés)</span>}
+              </p>
             </div>
           </div>
         </div>
@@ -141,6 +168,7 @@ const ReportExport = () => {
                             </h2>
                             <p className="text-sm text-foreground/70">
                               Sistema de Avaliação Judicial Explicável
+                              {isSimulation && " (Relatório de Simulação)"}
                             </p>
                           </div>
                         </div>
@@ -193,16 +221,25 @@ const ReportExport = () => {
                       <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
                         1. AVALIAÇÃO DE RISCO DE REINCIDÊNCIA
                       </h3>
+                      {isSimulation && (
+                         <Alert className="border-alert-bias bg-alert-bias/10">
+                           <Shield className="h-5 w-5 text-alert-bias" />
+                           <AlertTitle className="text-alert-bias font-bold">CENÁRIO SIMULADO (Mitigação de Viés/Risco)</AlertTitle>
+                           <AlertDescription className="text-sm">
+                             Este score reflete uma análise hipotética após a aplicação de ações corretivas e/ou a exclusão de fatores de viés proxy (ex: CEP de residência) para fins de comparação e auditoria de equidade.
+                           </AlertDescription>
+                         </Alert>
+                      )}
                       <div className="bg-muted/30 p-6 rounded-lg border border-foreground/10">
                         <div className="flex items-center justify-between mb-4">
                           <div>
                             <p className="text-sm text-foreground/70 mb-2">Score Calculado</p>
                             <div className="flex items-baseline gap-2">
-                              <span className="text-5xl font-bold text-foreground">{caseData.riskScore}</span>
+                              <span className="text-5xl font-bold text-foreground">{caseData.riskScore.toFixed(1)}</span>
                               <span className="text-2xl text-foreground/50">/10</span>
                             </div>
-                            <Badge className="mt-2 bg-foreground text-background">
-                              Risco Médio-Alto
+                            <Badge className={cn("mt-2 text-white", currentRiskLevel.color)}>
+                              Risco {currentRiskLevel.label}
                             </Badge>
                           </div>
                           <div className="text-right">
@@ -213,9 +250,9 @@ const ReportExport = () => {
                         </div>
                         <Separator className="my-4 bg-foreground/10" />
                         <p className="text-sm text-foreground/80 leading-relaxed">
-                          O score de {caseData.riskScore} indica um risco médio-alto de reincidência criminal. 
-                          Este valor foi calculado com base em {caseData.confidence}% de confiança estatística, 
-                          considerando múltiplos fatores objetivos validados pelo modelo preditivo.
+                          O score de **{caseData.riskScore.toFixed(1)}** indica um risco **{currentRiskLevel.label.toLowerCase()}** de reincidência criminal. 
+                          {isSimulation && " Este valor foi recalculado com base em um cenário de mitigação simulado, resultando em uma redução de risco."}
+                          {!isSimulation && ` Este valor foi calculado com base em ${caseData.confidence}% de confiança estatística, considerando múltiplos fatores objetivos validados pelo modelo preditivo.`}
                         </p>
                       </div>
                     </div>
@@ -279,7 +316,7 @@ const ReportExport = () => {
                   {selectedSections.technical && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
-                        3. ESPECIFICAÇÕES TÉCNICAS DO MODELO
+                        {selectedSections.shap ? "3. " : "2. "}ESPECIFICAÇÕES TÉCNICAS DO MODELO
                       </h3>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="space-y-2">
@@ -314,7 +351,7 @@ const ReportExport = () => {
                   {selectedSections.bias && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
-                        4. ALERTAS DE VIÉS E AUDITORIA
+                        {selectedSections.shap ? "4. " : "3. "}ALERTAS DE VIÉS E AUDITORIA
                       </h3>
                       <div className="border-2 border-foreground/30 p-4 rounded-lg bg-muted/20">
                         <div className="flex items-start gap-3">
@@ -332,6 +369,29 @@ const ReportExport = () => {
                     </div>
                   )}
 
+                  {/* Simulation Section (New or Enhanced) */}
+                  {selectedSections.simulation && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
+                        {sections.find(s => s.id === 'simulation')?.label}
+                      </h3>
+                      <Alert className="border-confidence-high bg-confidence-high/10">
+                        <CheckCircle2 className="h-5 w-5 text-confidence-high" />
+                        <AlertTitle className="text-confidence-high font-bold">IMPACTO POSITIVO DA MITIGAÇÃO</AlertTitle>
+                        <AlertDescription className="space-y-2 text-sm">
+                          <p>
+                            A simulação aplicada (ex: exclusão do fator CEP de residência) resultou em uma 
+                            redução de risco de **{(6.5 - caseData.riskScore).toFixed(1)} pontos** (de 6.5 para {caseData.riskScore.toFixed(1)}).
+                          </p>
+                          <p>
+                            Isto demonstra que a intervenção do profissional jurídico, baseada na análise XAI/SHAP, 
+                            é capaz de mitigar o impacto de vieses algorítmicos indiretos, conforme preconiza o modelo SAJE.
+                          </p>
+                        </AlertDescription>
+                      </Alert>
+                    </div>
+                  )}
+
                   {/* Certification Seal */}
                   <div className="border-t-2 border-foreground pt-6 mt-8">
                     <div className="flex items-center justify-between">
@@ -344,6 +404,7 @@ const ReportExport = () => {
                             </p>
                             <p className="text-xs text-foreground/70">
                               Certificação XAI - Explicabilidade Verificada
+                              {isSimulation && " (Simulação)"}
                             </p>
                             <p className="text-xs text-foreground/70">
                               Emitido em: {caseData.date} às {caseData.time}
