@@ -135,10 +135,12 @@ const CaseDetail = () => {
                   Auditoria de Viés
                 </Button>
               </Link>
-              <Button variant="outline">
-                <FileText className="h-4 w-4 mr-2" />
-                Exportar Relatório
-              </Button>
+              <Link to={`/report/${caseData.id}`}>
+                <Button variant="outline">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Exportar Relatório
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
