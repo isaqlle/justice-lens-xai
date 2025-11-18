@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; 
 import { 
   ArrowLeft, 
   Download, 
@@ -17,7 +17,7 @@ import {
   Scale,
   QrCode
 } from "lucide-react";
-import { cn } from "@/lib/utils"; // Import cn for Tailwind utilities
+import { cn } from "@/lib/utils"; 
 
 const ReportExport = () => {
   const { id } = useParams();
@@ -34,17 +34,21 @@ const ReportExport = () => {
     bias: true,
     technical: true,
     fairness: false,
-    simulation: isSimulation, // Select simulation section by default if it's a simulation
+    simulation: isSimulation, 
   });
 
   // Base mock data (Default riskScore is 6.5)
+  const baseRiskScore = 6.5;
+
+  // Use the simulated score if available, otherwise use the default risk score
+  const currentRiskScore = simulatedScoreParam ? parseFloat(simulatedScoreParam) : baseRiskScore;
+
   const baseCaseData = {
     id: id || "2024-001",
     defendant: "João Silva",
     age: 28,
-    // Use the simulated score if available, otherwise use the default risk score
-    riskScore: simulatedScoreParam ? parseFloat(simulatedScoreParam) : 6.5,
-    confidence: 85, // Assuming confidence remains constant
+    riskScore: currentRiskScore,
+    confidence: 85, 
     date: new Date().toLocaleDateString("pt-BR"),
     time: new Date().toLocaleTimeString("pt-BR"),
     judge: "Dr. Ana Costa",
@@ -71,7 +75,7 @@ const ReportExport = () => {
     { id: "bias", label: "Alerta de Viés Aplicado", required: false },
     { id: "technical", label: "Descrição Técnica do Modelo (Algoritmo, Versão, Data)", required: true },
     { id: "fairness", label: "Métricas Globais de Fairness", required: false },
-    { id: "simulation", label: "Simulações de Cenários Alternativos (Cenário " + (isSimulation ? "Simulado)" : "Base)"), required: false },
+    { id: "simulation", label: "Simulações de Cenários Alternativos (Cenário " + (isSimulation ? "Mitigação de Racismo Algorítmico)" : "Base)"), required: false },
   ];
 
   return (
@@ -92,7 +96,7 @@ const ReportExport = () => {
               </h1>
               <p className="text-sm text-muted-foreground">
                 Caso {caseData.id} - {caseData.defendant} 
-                {isSimulation && <span className="font-semibold text-alert-bias ml-2">(Cenário Simulado de Mitigação de Viés)</span>}
+                {isSimulation && <span className="font-semibold text-alert-bias ml-2">(Cenário Simulado de Mitigação de Racismo Algorítmico)</span>}
               </p>
             </div>
           </div>
@@ -168,7 +172,7 @@ const ReportExport = () => {
                             </h2>
                             <p className="text-sm text-foreground/70">
                               Sistema de Avaliação Judicial Explicável
-                              {isSimulation && " (Relatório de Simulação)"}
+                              {isSimulation && " (Relatório de Simulação de Contestação)"}
                             </p>
                           </div>
                         </div>
@@ -224,9 +228,9 @@ const ReportExport = () => {
                       {isSimulation && (
                          <Alert className="border-alert-bias bg-alert-bias/10">
                            <Shield className="h-5 w-5 text-alert-bias" />
-                           <AlertTitle className="text-alert-bias font-bold">CENÁRIO SIMULADO (Mitigação de Viés/Risco)</AlertTitle>
+                           <AlertTitle className="text-alert-bias font-bold">CENÁRIO SIMULADO (Mitigação de Racismo Algorítmico)</AlertTitle>
                            <AlertDescription className="text-sm">
-                             Este score reflete uma análise hipotética após a aplicação de ações corretivas e/ou a exclusão de fatores de viés proxy (ex: CEP de residência) para fins de comparação e auditoria de equidade.
+                             Este score reflete uma análise hipotética após a aplicação de ações corretivas, especificamente a <span className="font-semibold">Anulação Ética</span> de fatores de viés proxy (ex: CEP de residência) com alta correlação com o <span className="font-bold">viés racial</span>, para fins de auditoria de equidade e contestação.
                            </AlertDescription>
                          </Alert>
                       )}
@@ -251,14 +255,14 @@ const ReportExport = () => {
                         <Separator className="my-4 bg-foreground/10" />
                         <p className="text-sm text-foreground/80 leading-relaxed">
                           O score de **{caseData.riskScore.toFixed(1)}** indica um risco **{currentRiskLevel.label.toLowerCase()}** de reincidência criminal. 
-                          {isSimulation && " Este valor foi recalculado com base em um cenário de mitigação simulado, resultando em uma redução de risco."}
+                          {isSimulation && " Este valor foi recalculado com base em um cenário de mitigação simulado, evidenciando o impacto do viés racial no score original."}
                           {!isSimulation && ` Este valor foi calculado com base em ${caseData.confidence}% de confiança estatística, considerando múltiplos fatores objetivos validados pelo modelo preditivo.`}
                         </p>
                       </div>
                     </div>
                   )}
 
-                  {/* SHAP Section */}
+                  {/* SHAP Section (mantido neutro, pois é a técnica) */}
                   {selectedSections.shap && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
@@ -312,7 +316,7 @@ const ReportExport = () => {
                     </div>
                   )}
 
-                  {/* Technical Section */}
+                  {/* Technical Section (mantido neutro) */}
                   {selectedSections.technical && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
@@ -347,7 +351,7 @@ const ReportExport = () => {
                     </div>
                   )}
 
-                  {/* Bias Alert Section */}
+                  {/* Bias Alert Section (adaptado) */}
                   {selectedSections.bias && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
@@ -357,11 +361,9 @@ const ReportExport = () => {
                         <div className="flex items-start gap-3">
                           <CheckCircle2 className="h-5 w-5 text-foreground mt-0.5 flex-shrink-0" />
                           <div className="space-y-2">
-                            <p className="font-semibold text-foreground">Verificação de Equidade</p>
+                            <p className="font-semibold text-foreground">Verificação de Equidade Racial</p>
                             <p className="text-sm text-foreground/80">
-                              Nenhum dado de raça, etnia, gênero ou religião foi utilizado diretamente 
-                              no cálculo do score de risco. O sistema passou por auditoria de fairness 
-                              em 15/11/2024 com resultado "Aceitável com Alertas".
+                              O sistema SAJE monitora ativamente fatores proxy. O modelo passou por auditoria de fairness racial em 15/11/2024 com resultado "Aceitável com Alertas" (Viés na Métrica de Igualdade de Oportunidade).
                             </p>
                           </div>
                         </div>
@@ -369,7 +371,7 @@ const ReportExport = () => {
                     </div>
                   )}
 
-                  {/* Simulation Section (New or Enhanced) */}
+                  {/* Simulation Section (com foco em Equidade Racial) */}
                   {selectedSections.simulation && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold text-foreground border-b border-foreground/20 pb-2">
@@ -377,15 +379,15 @@ const ReportExport = () => {
                       </h3>
                       <Alert className="border-confidence-high bg-confidence-high/10">
                         <CheckCircle2 className="h-5 w-5 text-confidence-high" />
-                        <AlertTitle className="text-confidence-high font-bold">IMPACTO POSITIVO DA MITIGAÇÃO</AlertTitle>
+                        <AlertTitle className="text-confidence-high font-bold">IMPACTO POSITIVO NA EQUIDADE RACIAL</AlertTitle>
                         <AlertDescription className="space-y-2 text-sm">
                           <p>
-                            A simulação aplicada (ex: exclusão do fator CEP de residência) resultou em uma 
-                            redução de risco de **{(6.5 - caseData.riskScore).toFixed(1)} pontos** (de 6.5 para {caseData.riskScore.toFixed(1)}).
+                            A simulação aplicada, baseada na <span className="font-semibold">Anulação Ética</span> do fator proxy ("CEP de residência") que contribui para o viés racial, resultou em uma 
+                            redução de risco de **{(baseRiskScore - caseData.riskScore).toFixed(1)} pontos** (de {baseRiskScore.toFixed(1)} para {caseData.riskScore.toFixed(1)}).
                           </p>
                           <p>
-                            Isto demonstra que a intervenção do profissional jurídico, baseada na análise XAI/SHAP, 
-                            é capaz de mitigar o impacto de vieses algorítmicos indiretos, conforme preconiza o modelo SAJE.
+                            Isto demonstra que a intervenção do profissional jurídico, suportada pela transparência XAI/SHAP, 
+                            é eficaz para mitigar o <span className="font-semibold">Racismo Algorítmico</span>, alinhando-se ao princípio de Justiça do SAJE.
                           </p>
                         </AlertDescription>
                       </Alert>
@@ -404,7 +406,7 @@ const ReportExport = () => {
                             </p>
                             <p className="text-xs text-foreground/70">
                               Certificação XAI - Explicabilidade Verificada
-                              {isSimulation && " (Simulação)"}
+                              {isSimulation && " (Simulação de Contestação)"}
                             </p>
                             <p className="text-xs text-foreground/70">
                               Emitido em: {caseData.date} às {caseData.time}

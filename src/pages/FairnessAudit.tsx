@@ -17,6 +17,7 @@ import {
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -30,10 +31,10 @@ import {
 const FairnessAudit = () => {
   // Data for regional comparison
   const regionalData = [
-    { region: "Região A (Centro)", avgRisk: 5.8, cases: 324 },
-    { region: "Região B (Periferia)", avgRisk: 7.2, cases: 412 },
-    { region: "Região C (Subúrbio)", avgRisk: 6.1, cases: 289 },
-    { region: "Região D (Rural)", avgRisk: 4.9, cases: 156 },
+    { region: "Região A (Centro)", avgRisk: 5.8, cases: 324, fill: "hsl(var(--primary))" },
+    { region: "Região B (Periferia)", avgRisk: 7.2, cases: 412, fill: "hsl(var(--alert-bias))" },
+    { region: "Região C (Subúrbio)", avgRisk: 6.1, cases: 289, fill: "hsl(var(--primary))" },
+    { region: "Região D (Rural)", avgRisk: 4.9, cases: 156, fill: "hsl(var(--primary))" },
   ];
 
   // Data for socioeconomic comparison
@@ -102,7 +103,7 @@ const FairnessAudit = () => {
             </Link>
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground">Dashboard de Auditoria de Viés</h1>
-              <p className="text-sm text-muted-foreground">Módulo de Explicabilidade Global - Análise de Fairness do Sistema</p>
+              <p className="text-sm text-muted-foreground">Módulo de Explicabilidade Global do SAJE - Foco em Viés Racial</p>
             </div>
             <Button>
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -121,16 +122,16 @@ const FairnessAudit = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Status Global de Fairness
+                  Status Global de Equidade Racial
                 </CardTitle>
-                <CardDescription>Avaliação geral do modelo quanto à equidade</CardDescription>
+                <CardDescription>Avaliação geral do modelo quanto à equidade em grupos protegidos</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-3xl font-bold text-alert-bias">Aceitável com Alertas</h3>
+                    <h3 className="text-3xl font-bold text-alert-bias">Aceitável com Alertas de Viés</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      2 de 4 métricas apresentam desvios que requerem atenção
+                      Métrica **Average Odds Difference** sugere disparidade nas taxas de Falso Positivo e Falso Negativo.
                     </p>
                   </div>
                   <div className="h-24 w-24 rounded-full border-8 border-alert-bias/30 flex items-center justify-center">
@@ -156,7 +157,7 @@ const FairnessAudit = () => {
                           className="flex-1"
                         />
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          Limite: {metric.threshold.toFixed(2)}
+                          Limite Ético: {metric.threshold.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -170,10 +171,10 @@ const FairnessAudit = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Comparação Regional de Score Médio
+                  Comparação de Risco por Proxy Geográfico (CEP)
                 </CardTitle>
                 <CardDescription>
-                  Distribuição de risco predito por região geográfica
+                  O CEP é um proxy conhecido para segregação e viés racial/socioeconômico.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -197,20 +198,26 @@ const FairnessAudit = () => {
                         borderRadius: '8px'
                       }}
                     />
-                    <Legend />
                     <Bar 
                       dataKey="avgRisk" 
-                      fill="hsl(var(--alert-bias))" 
                       name="Score Médio de Risco"
+                      fill="hsl(var(--primary))"
                       radius={[8, 8, 0, 0]}
-                    />
+                    >
+                      {regionalData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.region === "Região B (Periferia)" ? "hsl(var(--alert-bias))" : "hsl(var(--primary))"} 
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
                 <Alert className="mt-4 border-alert-bias bg-alert-bias/10">
                   <AlertTriangle className="h-4 w-4 text-alert-bias" />
                   <AlertDescription className="text-sm">
-                    <span className="font-semibold">Disparidade detectada:</span> A Região B apresenta 
-                    score médio 24% superior à Região A, indicando possível viés geográfico.
+                    <span className="font-semibold">Viés Estrutural Evidenciado:</span> A Região B (Periferia), historicamente associada a grupos minorizados, apresenta 
+                    score médio 24% superior à Região A. Esta disparidade indica um **Viés Racial/Geográfico** que deve ser mitigado.
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -219,9 +226,9 @@ const FairnessAudit = () => {
             {/* Socioeconomic Analysis */}
             <Card>
               <CardHeader>
-                <CardTitle>Análise por Status Socioeconômico</CardTitle>
+                <CardTitle>Análise por Viés Socioeconômico e Taxa de Falso Positivo (FPR)</CardTitle>
                 <CardDescription>
-                  Taxa de Falsos Positivos (FPR) e Score Médio por grupo
+                  Modelos preditivos tendem a penalizar duplamente o grupo de status Baixo, aumentando o FPR.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -270,6 +277,13 @@ const FairnessAudit = () => {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+                <Alert className="mt-4 border-factor-negative bg-factor-negative/10">
+                  <AlertTriangle className="h-4 w-4 text-factor-negative" />
+                  <AlertDescription className="text-sm">
+                    <span className="font-semibold">Risco de Iniquidade:</span> O grupo de **Status Baixo** tem a maior taxa de FPR (32%), o que significa que réus deste grupo 
+                    são mais propensos a serem classificados erroneamente como de "Alto Risco", perpetuando o ciclo de **Racismo Algorítmico**.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
             </Card>
 
@@ -277,14 +291,14 @@ const FairnessAudit = () => {
             <Alert className="border-factor-negative bg-factor-negative/10">
               <TrendingUp className="h-5 w-5 text-factor-negative" />
               <AlertTitle className="text-factor-negative font-bold">
-                Desvio (Drift) Detectado no Modelo
+                Desvio (Drift) Detectado no Modelo - Alerta de Mudança de Correlação
               </AlertTitle>
               <AlertDescription className="space-y-4 mt-3">
                 <p className="text-sm">
                   <span className="font-semibold">Análise temporal:</span> Nos últimos 6 meses, 
                   a correlação entre o fator <span className="font-semibold">"Nível de Instrução"</span> e 
                   o risco predito aumentou em <span className="font-semibold text-factor-negative">24%</span>, 
-                  indicando um possível drift nos dados de treinamento ou mudança no padrão populacional.
+                  indicando um possível drift que pode introduzir novos vieses estruturais.
                 </p>
                 
                 <ResponsiveContainer width="100%" height={150}>
@@ -336,7 +350,7 @@ const FairnessAudit = () => {
                   Variáveis Excluídas
                 </CardTitle>
                 <CardDescription>
-                  Por política de equidade
+                  Por política de Equidade Racial e Direitos Humanos
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -344,8 +358,7 @@ const FairnessAudit = () => {
                   <CheckCircle2 className="h-5 w-5 text-confidence-high mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-muted-foreground">
                     As seguintes variáveis foram <span className="font-semibold text-foreground">
-                    explicitamente excluídas</span> do módulo preditivo para garantir a equidade 
-                    e conformidade com direitos fundamentais:
+                    explicitamente excluídas</span> do Módulo Preditivo (SAJE) para combater o **Racismo Algorítmico** e garantir a equidade:
                   </p>
                 </div>
 
@@ -364,8 +377,8 @@ const FairnessAudit = () => {
                 <Alert className="border-confidence-high bg-confidence-high/10">
                   <CheckCircle2 className="h-4 w-4 text-confidence-high" />
                   <AlertDescription className="text-xs">
-                    Todas as variáveis excluídas são auditadas mensalmente para garantir 
-                    que não sejam introduzidas indiretamente via proxies.
+                    Todas as variáveis protegidas são auditadas mensalmente para garantir 
+                    que não sejam introduzidas indiretamente via **Proxies** (como o CEP de residência).
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -374,7 +387,7 @@ const FairnessAudit = () => {
             {/* Summary Stats */}
             <Card>
               <CardHeader>
-                <CardTitle>Estatísticas do Sistema</CardTitle>
+                <CardTitle>Estatísticas do Módulo SAJE</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -383,7 +396,7 @@ const FairnessAudit = () => {
                     <span className="text-lg font-bold">1,181</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Última auditoria</span>
+                    <span className="text-sm text-muted-foreground">Última Auditoria de Equidade</span>
                     <span className="text-sm font-semibold">15/11/2024</span>
                   </div>
                   <div className="flex justify-between items-center">
