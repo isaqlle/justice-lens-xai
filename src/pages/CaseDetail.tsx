@@ -128,10 +128,18 @@ const CaseDetail = () => {
               <h1 className="text-2xl font-bold text-foreground">{caseData.defendant}</h1>
               <p className="text-sm text-muted-foreground">Caso {caseData.id} - Análise Detalhada XAI</p>
             </div>
-            <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Exportar Relatório
-            </Button>
+            <div className="flex gap-2">
+              <Link to="/fairness-audit">
+                <Button variant="outline">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Auditoria de Viés
+                </Button>
+              </Link>
+              <Button variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar Relatório
+              </Button>
+            </div>
           </div>
         </div>
       </header>
